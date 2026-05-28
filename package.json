@@ -1,0 +1,19 @@
+{
+  "name": "wifi-region-scanner",
+  "version": "1.0.0",
+  "description": "Scan office test routers and detect which region each is currently pointing to",
+  "main": "scan.js",
+  "scripts": {
+    "scan": "node scan.js scan",
+    "detect": "node scan.js detect",
+    "ui": "node server.js",
+    "import": "node import-routers.js",
+    "export-catalog": "node export-catalog.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

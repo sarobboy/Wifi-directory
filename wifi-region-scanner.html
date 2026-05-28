@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Office WiFi Region Finder</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #151c27;
+      --panel2: #1c2636;
+      --border: #2a3648;
+      --text: #eef2f7;
+      --muted: #8fa3bd;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    header {
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+    }
+    header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    header p { margin: 0.4rem 0 0; color: var(--muted); font-size: 0.9rem; max-width: 42rem; }
+    main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      margin: 0 0 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    label { font-size: 0.85rem; color: var(--muted); }
+    input[type="text"], input[type="search"] {
+      flex: 1;
+      min-width: 200px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+    input:focus { outline: 2px solid rgba(59,130,246,0.45); border-color: var(--accent); }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.55rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:hover:not(:disabled) { background: var(--accent-hover); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.secondary {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 500;
+    }
+    .status {
+      font-size: 0.875rem;
+      color: var(--muted);
+      min-height: 1.25rem;
+      margin-top: 0.75rem;
+    }
+    .meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    .meta strong { color: var(--text); font-weight: 500; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.7rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 500;
+      background: var(--panel2);
+      position: sticky;
+      top: 0;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(59,130,246,0.04); }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: lowercase;
+    }
+    .badge.ok { background: rgba(34,197,94,0.15); color: var(--ok); }
+    .badge.pending, .badge.in_range { background: rgba(143,163,189,0.15); color: var(--muted); }
+    .badge.err { background: rgba(239,68,68,0.15); color: var(--err); }
+    .empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; }
+    .banner {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.35);
+      color: #fcd34d;
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .banner.hidden { display: none; }
+    details {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    details ol, details ul { margin: 0.75rem 0 0; padding-left: 1.25rem; color: var(--muted); font-size: 0.85rem; }
+    details code {
+      background: var(--panel2);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .signal { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
+    @media (max-width: 640px) {
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Office WiFi Region Finder</h1>
+    <p>Find which test router points to which region. Share this page with your team — results update when someone runs a live scan from the office Mac.</p>
+  </header>
+
+  <main>
+    <div id="offline-banner" class="banner hidden">
+      Viewing saved results from Git. For a live scan, connect to the office scanner server below (office Wi‑Fi or VPN required).
+    </div>
+
+    <div class="card">
+      <h2>Search</h2>
+      <div class="row">
+        <input type="search" id="filter" placeholder="Filter by Wi‑Fi name or region (e.g. Mumbai, US-East)…" />
+        <button type="button" class="secondary" id="btn-refresh">Refresh saved results</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Live scan (optional)</h2>
+      <div class="row">
+        <label for="api-url">Scanner server</label>
+        <input type="text" id="api-url" placeholder="http://localhost:3002 or http://OFFICE-MAC-IP:3002" />
+        <button type="button" id="btn-save-api" class="secondary">Save</button>
+      </div>
+      <div class="row" style="margin-top: 0.75rem;">
+        <button type="button" id="btn-scan">Scan nearby</button>
+        <button type="button" id="btn-detect">Detect live regions</button>
+      </div>
+      <div class="status" id="status">Loading saved results…</div>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div style="padding: 1rem 1.1rem 0;">
+        <h2 style="margin-bottom: 0.35rem;">Routers</h2>
+        <div class="meta" id="meta">—</div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Wi‑Fi name</th>
+              <th>Location</th>
+              <th>Region (current)</th>
+              <th>Signal</th>
+              <th>Notes</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="6" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <details>
+      <summary>Setup for admins (run once on office Mac)</summary>
+      <ol>
+        <li>Clone this repo and add router passwords to <code>wifi-region-scanner/routers.json</code> (never commit passwords).</li>
+        <li>In Terminal.app: <code>cd wifi-region-scanner && npm install && npm run ui</code></li>
+        <li>Click <strong>Detect live regions</strong> above (with scanner server set to that Mac’s IP).</li>
+        <li>Commit <code>docs/routers-directory.json</code> (router list, no passwords) and <code>docs/routers-status.json</code> (last regions).</li>
+      </ol>
+      <p style="margin: 0.75rem 0 0; font-size: 0.85rem; color: var(--muted);">
+        <strong>GitHub Pages URL:</strong> enable Pages → source <code>/docs</code> → share
+        <code>https://&lt;your-org&gt;.github.io/&lt;repo&gt;/wifi-region-scanner.html</code>
+      </p>
+    </details>
+  </main>
+
+  <script>
+    const tbody = document.getElementById('tbody');
+    const statusEl = document.getElementById('status');
+    const metaEl = document.getElementById('meta');
+    const filterEl = document.getElementById('filter');
+    const apiUrlEl = document.getElementById('api-url');
+    const offlineBanner = document.getElementById('offline-banner');
+
+    const btnRefresh = document.getElementById('btn-refresh');
+    const btnSaveApi = document.getElementById('btn-save-api');
+    const btnScan = document.getElementById('btn-scan');
+    const btnDetect = document.getElementById('btn-detect');
+
+    let allRows = [];
+    const API_KEY = 'wifi-region-scanner-api';
+
+    function getApiBase() {
+      const params = new URLSearchParams(location.search);
+      const fromQuery = params.get('api');
+      if (fromQuery) return fromQuery.replace(/\/$/, '');
+
+      const saved = localStorage.getItem(API_KEY);
+      if (saved) return saved.replace(/\/$/, '');
+
+      if (location.protocol !== 'file:' && location.hostname === 'localhost') {
+        return location.origin;
+      }
+      return '';
+    }
+
+    function setApiBase(url) {
+      localStorage.setItem(API_KEY, url);
+      apiUrlEl.value = url;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function rssiBars(rssi) {
+      if (rssi == null) return '—';
+      if (rssi >= -50) return '████';
+      if (rssi >= -60) return '███░';
+      if (rssi >= -70) return '██░░';
+      return '█░░░';
+    }
+
+    function badge(status) {
+      const s = status || 'pending';
+      const cls = s === 'ok' ? 'ok' : (s === 'in_range' || s === 'pending' ? 'pending' : 'err');
+      const labels = {
+        ok: 'detected',
+        in_range: 'in range',
+        pending: 'pending',
+        connect_failed: 'connect failed',
+        no_internet: 'no internet',
+        error: 'error',
+        unknown: 'unknown',
+      };
+      return `<span class="badge ${cls}">${labels[s] || s}</span>`;
+    }
+
+    function formatUpdated(iso, by) {
+      if (!iso) return 'No scan results yet — an admin needs to run a live detect.';
+      const d = new Date(iso);
+      const when = d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      return by ? `Last updated <strong>${when}</strong> from <strong>${escapeHtml(by)}</strong>` : `Last updated <strong>${when}</strong>`;
+    }
+
+    function render() {
+      const q = filterEl.value.trim().toLowerCase();
+      const rows = allRows.filter(r => {
+        if (!q) return true;
+        const hay = [r.ssid, r.label, r.region, r.location, r.shelf, r.notes, r.country]
+          .filter(Boolean).join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No routers match your filter.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const loc = [r.location, r.shelf].filter(Boolean).join(' · ') || '—';
+        const title = r.label ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem">${escapeHtml(r.label)}</div>` : '';
+        return `
+        <tr>
+          <td><strong>${escapeHtml(r.ssid)}</strong>${title}</td>
+          <td>${escapeHtml(loc)}</td>
+          <td>${escapeHtml(r.region || '—')}</td>
+          <td class="signal">${r.rssi != null ? rssiBars(r.rssi) + ' ' + r.rssi + ' dBm' : '—'}</td>
+          <td>${escapeHtml(r.notes || '—')}</td>
+          <td>${badge(r.status)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function mergeCatalogAndStatus(directory, statusList) {
+      const map = new Map();
+      for (const r of directory || []) {
+        map.set(r.ssid, {
+          ssid: r.ssid,
+          label: r.label,
+          location: r.location,
+          shelf: r.shelf,
+          notes: r.notes,
+          region: null,
+          rssi: null,
+          status: 'pending',
+        });
+      }
+      for (const r of statusList || []) {
+        const prev = map.get(r.ssid) || { ssid: r.ssid };
+        map.set(r.ssid, { ...prev, ...r });
+      }
+      return [...map.values()];
+    }
+
+    function setRowsFromPayload(data) {
+      allRows = (data.routers || []).slice().sort((a, b) => {
+        const ra = (a.region || '').localeCompare(b.region || '');
+        return ra || (a.ssid || '').localeCompare(b.ssid || '');
+      });
+      metaEl.innerHTML = formatUpdated(data.updatedAt, data.updatedBy);
+      render();
+    }
+
+    async function loadSavedResults() {
+      setStatus('Loading router list…');
+      try {
+        const ts = Date.now();
+        const [statusRes, dirRes] = await Promise.all([
+          fetch('routers-status.json?_=' + ts),
+          fetch('routers-directory.json?_=' + ts).catch(() => null),
+        ]);
+        if (!statusRes.ok) throw new Error('Could not load routers-status.json');
+
+        const status = await statusRes.json();
+        let directory = [];
+        if (dirRes?.ok) {
+          const dir = await dirRes.json();
+          directory = dir.routers || [];
+        }
+
+        const merged = mergeCatalogAndStatus(directory, status.routers);
+        setRowsFromPayload({ updatedAt: status.updatedAt, updatedBy: status.updatedBy, routers: merged });
+
+        const hasRegions = merged.some(r => r.region && r.region !== '—');
+        offlineBanner.classList.toggle('hidden', hasRegions && getApiBase());
+        const count = merged.length;
+        setStatus(`Showing ${count} router(s). ${hasRegions ? 'Regions from last office scan.' : 'Run detect on office Mac to fill regions.'}`);
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No data yet. Commit docs/routers-directory.json and routers-status.json.</td></tr>';
+        setStatus('Could not load: ' + e.message);
+        offlineBanner.classList.remove('hidden');
+      }
+    }
+
+    function setStatus(msg) { statusEl.textContent = msg; }
+
+    function apiUrl(path) {
+      const base = getApiBase();
+      if (!base) throw new Error('Set scanner server URL first (office Mac IP:3002)');
+      return base + path;
+    }
+
+    btnSaveApi.onclick = () => {
+      const url = apiUrlEl.value.trim().replace(/\/$/, '');
+      if (!url) return setStatus('Enter a scanner server URL.');
+      setApiBase(url);
+      setStatus('Saved scanner server: ' + url);
+    };
+
+    btnRefresh.onclick = () => loadSavedResults();
+
+    filterEl.oninput = () => render();
+
+    btnScan.onclick = async () => {
+      btnScan.disabled = true;
+      setStatus('Scanning nearby networks…');
+      try {
+        const res = await fetch(apiUrl('/api/scan'));
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        allRows = data.inRange.map(r => ({
+          ssid: r.ssid,
+          rssi: r.rssi,
+          region: r.label || null,
+          status: 'in_range',
+        }));
+        metaEl.innerHTML = `Live scan — <strong>${data.inRange.length}</strong> configured router(s) in range`;
+        render();
+        setStatus(`Found ${data.inRange.length} router(s) in range. Click Detect for live regions.`);
+      } catch (e) {
+        setStatus('Scan failed: ' + e.message);
+      } finally {
+        btnScan.disabled = false;
+      }
+    };
+
+    btnDetect.onclick = async () => {
+      btnScan.disabled = true;
+      btnDetect.disabled = true;
+      setStatus('Detecting regions — this connects to each router briefly…');
+
+      const collected = [];
+
+      try {
+        const res = await fetch(apiUrl('/api/detect'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+
+        if (!res.ok && !res.body) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || res.statusText);
+        }
+
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split('\n\n');
+          buf = parts.pop();
+
+          for (const block of parts) {
+            const lines = block.split('\n');
+            let event = 'message';
+            let data = null;
+            for (const line of lines) {
+              if (line.startsWith('event: ')) event = line.slice(7);
+              if (line.startsWith('data: ')) data = JSON.parse(line.slice(6));
+            }
+            if (!data) continue;
+
+            if (event === 'progress') {
+              setStatus(data.phase === 'restoring'
+                ? `Restoring Wi‑Fi (${data.ssid})…`
+                : `[${data.index}/${data.total}] ${data.ssid} — ${data.phase}…`);
+            }
+            if (event === 'result') {
+              collected.push(data);
+              allRows = collected.slice();
+              metaEl.innerHTML = 'Live detection in progress…';
+              render();
+            }
+            if (event === 'done') {
+              setStatus('Done. Commit docs/routers-status.json and push so the team sees updated regions on this page.');
+            }
+            if (event === 'exported') {
+              setStatus(`Exported ${data.count} result(s) to docs/routers-status.json — commit and push to share.`);
+            }
+            if (event === 'error') setStatus('Error: ' + data.message);
+            if (event === 'warn') setStatus(data.message);
+          }
+        }
+      } catch (e) {
+        setStatus('Detect failed: ' + e.message);
+      } finally {
+        btnScan.disabled = false;
+        btnDetect.disabled = false;
+      }
+    };
+
+    // Init
+    apiUrlEl.value = getApiBase();
+    if (!getApiBase()) offlineBanner.classList.remove('hidden');
+    loadSavedResults();
+  </script>
+</body>
+</html>

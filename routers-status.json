@@ -1,0 +1,84 @@
+{
+  "updatedAt": "2026-05-28T11:11:44.080Z",
+  "updatedBy": "Mac",
+  "routers": [
+    {
+      "ssid": "LP",
+      "label": null,
+      "location": null,
+      "shelf": null,
+      "notes": null,
+      "region": "—",
+      "ip": "—",
+      "rssi": null,
+      "country": null,
+      "timezone": null,
+      "status": "not in range"
+    },
+    {
+      "ssid": "Ash",
+      "label": null,
+      "location": null,
+      "shelf": null,
+      "notes": null,
+      "region": "—",
+      "ip": "—",
+      "rssi": null,
+      "country": null,
+      "timezone": null,
+      "status": "not in range"
+    },
+    {
+      "ssid": "AsusPTC075",
+      "label": null,
+      "location": null,
+      "shelf": null,
+      "notes": null,
+      "region": "—",
+      "ip": "—",
+      "rssi": null,
+      "country": null,
+      "timezone": null,
+      "status": "not in range"
+    },
+    {
+      "ssid": "MOPS3_5G",
+      "label": null,
+      "location": null,
+      "shelf": null,
+      "notes": null,
+      "region": "—",
+      "ip": "—",
+      "rssi": null,
+      "country": null,
+      "timezone": null,
+      "status": "not in range"
+    },
+    {
+      "ssid": "ASUSPTC_071_5G",
+      "label": null,
+      "location": null,
+      "shelf": null,
+      "notes": null,
+      "region": "—",
+      "ip": "—",
+      "rssi": null,
+      "country": null,
+      "timezone": null,
+      "status": "not in range"
+    },
+    {
+      "ssid": "TP_Link_388",
+      "label": null,
+      "location": null,
+      "shelf": null,
+      "notes": null,
+      "region": "—",
+      "ip": "—",
+      "rssi": null,
+      "country": null,
+      "timezone": null,
+      "status": "not in range"
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WiFi Region Scanner</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.875rem; }
+    main { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.secondary { background: var(--panel); border: 1px solid var(--border); color: var(--text); }
+    .status {
+      padding: 0.75rem 1rem;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      min-height: 2.5rem;
+    }
+  table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    th { color: var(--muted); font-weight: 500; background: #152030; }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .badge.ok { background: rgba(34,197,94,0.15); color: var(--ok); }
+    .badge.pending { background: rgba(139,156,179,0.15); color: var(--muted); }
+    .badge.err { background: rgba(239,68,68,0.15); color: var(--err); }
+    .empty { text-align: center; color: var(--muted); padding: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WiFi Region Scanner</h1>
+    <p>Scans nearby office routers and detects which region each is currently pointing to.</p>
+  </header>
+  <main>
+    <div class="actions">
+      <button id="btn-scan">Scan nearby</button>
+      <button id="btn-detect">Detect regions</button>
+    </div>
+    <div class="status" id="status">Ready — add routers.json, then scan.</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Wi-Fi name</th>
+          <th>Signal</th>
+          <th>Region (live)</th>
+          <th>IP</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="5" class="empty">No results yet</td></tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const tbody = document.getElementById('tbody');
+    const statusEl = document.getElementById('status');
+    const btnScan = document.getElementById('btn-scan');
+    const btnDetect = document.getElementById('btn-detect');
+    let rows = new Map();
+
+    function setStatus(msg) { statusEl.textContent = msg; }
+
+    function rssiBars(rssi) {
+      if (rssi >= -50) return '████';
+      if (rssi >= -60) return '███░';
+      if (rssi >= -70) return '██░░';
+      return '█░░░';
+    }
+
+    function badge(status) {
+      const cls = status === 'ok' ? 'ok' : (status === 'in_range' || status === 'pending' ? 'pending' : 'err');
+      const label = {
+        ok: 'detected',
+        in_range: 'in range',
+        pending: '…',
+        connect_failed: 'connect failed',
+        no_internet: 'no internet',
+        error: 'error',
+      }[status] || status;
+      return `<span class="badge ${cls}">${label}</span>`;
+    }
+
+    function render() {
+      if (rows.size === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No configured routers in range</td></tr>';
+        return;
+      }
+      tbody.innerHTML = [...rows.values()].map(r => `
+        <tr>
+          <td>${escapeHtml(r.ssid)}</td>
+          <td>${r.rssi != null ? rssiBars(r.rssi) + ' ' + r.rssi + ' dBm' : '—'}</td>
+          <td>${escapeHtml(r.region || '—')}</td>
+          <td>${escapeHtml(r.ip || '—')}</td>
+          <td>${badge(r.status || 'pending')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    btnScan.onclick = async () => {
+      btnScan.disabled = true;
+      setStatus('Scanning…');
+      try {
+        const res = await fetch('/api/scan');
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        rows = new Map(data.inRange.map(r => [r.ssid, { ...r, status: 'in_range', region: r.label }]));
+        setStatus(`Found ${data.inRange.length} router(s) in range (${data.totalScanned} networks scanned)`);
+        render();
+      } catch (e) {
+        setStatus('Error: ' + e.message);
+      } finally {
+        btnScan.disabled = false;
+      }
+    };
+
+    btnDetect.onclick = async () => {
+      btnScan.disabled = true;
+      btnDetect.disabled = true;
+      setStatus('Detecting regions — connecting to each router briefly…');
+
+      try {
+        const res = await fetch('/api/detect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const parts = buf.split('\n\n');
+          buf = parts.pop();
+
+          for (const block of parts) {
+            const lines = block.split('\n');
+            let event = 'message';
+            let data = null;
+            for (const line of lines) {
+              if (line.startsWith('event: ')) event = line.slice(7);
+              if (line.startsWith('data: ')) data = JSON.parse(line.slice(6));
+            }
+            if (!data) continue;
+
+            if (event === 'progress') {
+              setStatus(data.phase === 'restoring'
+                ? `Restoring previous network (${data.ssid})…`
+                : `[${data.index}/${data.total}] ${data.ssid} — ${data.phase}…`);
+            }
+            if (event === 'result') {
+              rows.set(data.ssid, data);
+              render();
+            }
+            if (event === 'done') setStatus('Done.');
+            if (event === 'error') setStatus('Error: ' + data.message);
+            if (event === 'warn') setStatus(data.message);
+          }
+        }
+      } catch (e) {
+        setStatus('Error: ' + e.message);
+      } finally {
+        btnScan.disabled = false;
+        btnDetect.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

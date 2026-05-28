@@ -1,0 +1,17 @@
+[
+  {
+    "ssid": "PTC-Test-US-East",
+    "password": "your-password-here",
+    "label": "US East",
+    "location": "Shelf 3, left",
+    "shelf": "A1",
+    "notes": "Points to US region for app testing"
+  },
+  {
+    "ssid": "PTC-Test-EU-West",
+    "password": "your-password-here",
+    "label": "EU West",
+    "location": "Shelf 3, right",
+    "shelf": "A2"
+  }
+]

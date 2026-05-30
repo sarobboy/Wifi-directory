@@ -1,22 +1,15 @@
 {
-  "updatedAt": "2026-05-28T12:00:00.000Z",
+  "updatedAt": "2026-05-30T14:10:50.177Z",
   "routers": [
     {
-      "ssid": "MOPS3_5G",
+      "ssid": "LP",
       "label": null,
       "location": null,
       "shelf": null,
       "notes": null
     },
     {
-      "ssid": "ASUSPTC_071_5G",
-      "label": null,
-      "location": null,
-      "shelf": null,
-      "notes": null
-    },
-    {
-      "ssid": "TP_Link_388",
+      "ssid": "AsusPTC075",
       "label": null,
       "location": null,
       "shelf": null,

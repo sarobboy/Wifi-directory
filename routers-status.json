@@ -1,45 +1,32 @@
 {
-  "updatedAt": "2026-05-28T12:00:00.000Z",
-  "updatedBy": null,
+  "updatedAt": "2026-05-30T14:10:50.177Z",
+  "updatedBy": "Mac",
   "routers": [
     {
-      "ssid": "MOPS3_5G",
+      "ssid": "LP",
       "label": null,
       "location": null,
       "shelf": null,
       "notes": null,
-      "region": null,
-      "ip": null,
+      "region": "Chennai, Tamil Nadu, India",
+      "ip": "49.205.85.98",
       "rssi": null,
-      "country": null,
-      "timezone": null,
-      "status": "pending"
+      "country": "India",
+      "timezone": "Asia/Kolkata",
+      "status": "ok"
     },
     {
-      "ssid": "ASUSPTC_071_5G",
+      "ssid": "AsusPTC075",
       "label": null,
       "location": null,
       "shelf": null,
       "notes": null,
-      "region": null,
-      "ip": null,
+      "region": "Chicago, Illinois, United States",
+      "ip": "131.226.36.105",
       "rssi": null,
-      "country": null,
-      "timezone": null,
-      "status": "pending"
-    },
-    {
-      "ssid": "TP_Link_388",
-      "label": null,
-      "location": null,
-      "shelf": null,
-      "notes": null,
-      "region": null,
-      "ip": null,
-      "rssi": null,
-      "country": null,
-      "timezone": null,
-      "status": "pending"
+      "country": "United States",
+      "timezone": "America/Chicago",
+      "status": "ok"
     }
   ]
 }
